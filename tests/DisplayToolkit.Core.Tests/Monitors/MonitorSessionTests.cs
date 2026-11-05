@@ -1,3 +1,4 @@
+using DisplayToolkit.Core.Capabilities;
 using DisplayToolkit.Core.Features;
 using DisplayToolkit.Core.Monitors;
 using DisplayToolkit.Core.Tests.Fakes;
@@ -8,6 +9,8 @@ namespace DisplayToolkit.Core.Tests.Monitors;
 public sealed class MonitorSessionTests : IDisposable
 {
     private static readonly MonitorId Id = new("AUS32B1", @"\\?\DISPLAY#AUS32B1#test");
+
+    private static readonly MonitorId LegionId = new("LEN68C4", @"\\?\DISPLAY#LEN68C4#test");
 
     private readonly SimulatedMonitor _monitor = SimulatedMonitor.Pg32ucwm();
     private readonly RecordingLogger _log = new();
@@ -26,6 +29,65 @@ public sealed class MonitorSessionTests : IDisposable
         Assert.Equal(new FeatureValue(FeatureCatalog.Brightness, 70, 100, FeatureStatus.Confirmed), session.GetValue(FeatureCatalog.Brightness));
         Assert.Equal(1u, session.GetValue(FeatureCatalog.TaskbarDetection)!.Value);
         Assert.Equal(0u, session.GetValue(FeatureCatalog.UniformBrightness)!.Value);
+    }
+
+    [Fact]
+    public async Task Opening_a_Legion_selects_its_own_vendor_features()
+    {
+        var monitor = SimulatedMonitor.Legion2410();
+        var session = await MonitorSession.OpenAsync(
+            new MonitorConnection(LegionId, "Legion 24-10", monitor.OpenChannel()), monitor.Enumerator(LegionId, "Legion 24-10"),
+            MonitorSessionOptions.Instant, logger: _log);
+
+        Assert.Equal(MonitorVendor.Lenovo, session.Capabilities.Vendor);
+
+        // Its own features are present…
+        Assert.Contains(FeatureCatalog.Overdrive, session.Features);
+        Assert.Contains(FeatureCatalog.DynamicContrastRatio, session.Features);
+        Assert.Contains(FeatureCatalog.LenovoHdr, session.Features);
+        Assert.Contains(FeatureCatalog.GameMode, session.Features);
+        Assert.Contains(FeatureCatalog.DisplayScalingFeature, session.Features);
+        Assert.Contains(FeatureCatalog.LockMonitor, session.Features);
+        Assert.Contains(FeatureCatalog.RefreshRateDisplay, session.Features);
+
+        // …and the ASUS features that share the same codes are not.
+        Assert.DoesNotContain(FeatureCatalog.FpsCounter, session.Features);
+        Assert.DoesNotContain(FeatureCatalog.ScreenMove, session.Features);
+        Assert.DoesNotContain(FeatureCatalog.PixelCleaningReminder, session.Features);
+        Assert.DoesNotContain(FeatureCatalog.PictureMode, session.Features);
+        Assert.DoesNotContain(FeatureCatalog.HdrMode, session.Features);
+
+        Assert.Equal(0u, session.GetValue(FeatureCatalog.Overdrive)!.Value);
+        Assert.Equal(0x02u, session.GetValue(FeatureCatalog.DisplayScalingFeature)!.Value);
+    }
+
+    [Fact]
+    public async Task Writing_a_Lenovo_feature_is_confirmed_by_reading_back()
+    {
+        var monitor = SimulatedMonitor.Legion2410();
+        var session = await MonitorSession.OpenAsync(
+            new MonitorConnection(LegionId, "Legion 24-10", monitor.OpenChannel()), monitor.Enumerator(LegionId, "Legion 24-10"),
+            MonitorSessionOptions.Instant, logger: _log);
+
+        var result = await session.WriteAsync(FeatureCatalog.Overdrive, 3);
+
+        Assert.Equal(FeatureStatus.Confirmed, result.Status);
+        Assert.Equal(3u, monitor.Current(Vcp.LenovoOverdrive));
+    }
+
+    [Fact]
+    public async Task Writing_refresh_rate_display_toggles_only_its_bit()
+    {
+        var monitor = SimulatedMonitor.Legion2410();
+        var session = await MonitorSession.OpenAsync(
+            new MonitorConnection(LegionId, "Legion 24-10", monitor.OpenChannel()), monitor.Enumerator(LegionId, "Legion 24-10"),
+            MonitorSessionOptions.Instant, logger: _log);
+
+        var result = await session.WriteAsync(FeatureCatalog.RefreshRateDisplay, 1);
+
+        Assert.Equal(FeatureStatus.Confirmed, result.Status);
+        // The bit (0x0800) is set, the rest of the manifest (0xF5E0) is untouched.
+        Assert.Equal(0xFDE0u, monitor.Current(Vcp.LenovoFeatureToggles));
     }
 
     [Fact]

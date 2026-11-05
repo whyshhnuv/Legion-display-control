@@ -21,6 +21,18 @@ internal sealed class SimulatedMonitor
         "FB(0100 0200 0300 0400 0500 0600 0700 0800 0900 0A00 0B00 0C00 0E00 0F00 1000 1100 01 02 03 04 05 06 07 08 09 0A 0B 0C 0E 0F 10 11) " +
         "FC(089F) FD(6979) FF)mswhql(1)mccs_ver(2.2)asset_eep(40)";
 
+    // A Legion 24-10 (LEN68C4): its vendor codes overlap with ASUS's (0xE0 overdrive, 0xEA DCR, 0xEF HDR, 0xF9 game
+    // mode) and its gamma register advertises the low byte of each choice.
+    public const string Legion2410Capabilities =
+        "(prot(monitor)type(lcd)model(Legion 24-10)cmds(01 02 03 07 0C E3 F3)vcp(02 04 10 12 14(01 05 06 08 0B) " +
+        "16 18 1A 52 60(11 12 0F) AA(01 02) 72(05 78 FB 50 64 78 8C A0) 86(02 05) AC AE B2 B6 C8 C9 " +
+        "D6(01 04 05) CC(01 02 03 04 05 06 09 0A 0D 23 24) 62 DF F6 C6(03 02 DF 00 E0 85 00 78 00 88 88 " +
+        "00 D8 00 54 00 00 00 00) F6(01) F7(01 02(17 08) 09(01 02(00 03 04 05 06) 03(05 78 FB 50 64 78 8C A0) 04) " +
+        "0A(01 02(00 03 04 05 06) 03(05 78 FB 50 64 78 8C A0)) 0B(00 01) 1C) F8(01 02(17 08) 09(01 02(00 03 04 05 06) " +
+        "03(05 78 FB 50 64 78 8C A0) 04) 0A(01 02(00 03 04 05 06) 03(05 78 FB 50 64 78 8C A0)) 0B(00 01) 1C) " +
+        "F9(01 02 03 04 05 06 0A) FA(00 10 12 14 72 86 E0 EA EF F7(0B 1A) F9) EF(00 01) E0(00 03 04 05 06) " +
+        "EA(00 01) 8D DF FB FC FD)mccs_ver(2.1)mswhql(1))";
+
     private readonly Lock _gate = new();
     private readonly Dictionary<byte, VcpReply> _registers = [];
     private readonly Dictionary<byte, int> _staleReadsAfterWrite = [];
@@ -127,6 +139,28 @@ internal sealed class SimulatedMonitor
         }
     }
 
+    /// <summary>Starts with the values the Legion 24-10 reported (SDR, everything off, HDMI 1).</summary>
+    public static SimulatedMonitor Legion2410()
+    {
+        var monitor = new SimulatedMonitor(Legion2410Capabilities);
+        monitor.SetRegister(Vcp.Brightness, 80, 100);
+        monitor.SetRegister(Vcp.Contrast, 80, 100);
+        monitor.SetRegister(Vcp.ColorPreset, 0x0B, 0x0B);
+        monitor.SetRegister(Vcp.Gamma, 0x7800, 0xA000);
+        monitor.SetRegister(Vcp.InputSource, 0x11, 0x12);
+        monitor.SetRegister(Vcp.AudioVolume, 0, 100);
+        monitor.SetRegister(Vcp.AudioMute, 2, 2);
+        monitor.SetRegister(Vcp.LenovoOverdrive, 0, 6);
+        monitor.SetRegister(Vcp.LenovoDynamicContrastRatio, 0, 1);
+        monitor.SetRegister(Vcp.LenovoHdr, 0, 1);
+        monitor.SetRegister(Vcp.LenovoGameMode, 0x0A, 0x0A);
+        monitor.SetRegister(Vcp.DisplayScaling, 0x02, 0x10);
+        monitor.SetRegister(Vcp.LenovoLock, 0, 1);
+        // 0xFA feature manifest, everything off like the freshly-read Legion (bit 0x0800 = refresh-rate display).
+        monitor.SetRegister(Vcp.LenovoFeatureToggles, 0xF5E0, 0xF5E0);
+        return monitor;
+    }
+
     public IDdcChannel OpenChannel()
     {
         lock (_gate)
@@ -135,7 +169,7 @@ internal sealed class SimulatedMonitor
         }
     }
 
-    public IMonitorEnumerator Enumerator(MonitorId id) => new SingleMonitorEnumerator(this, id);
+    public IMonitorEnumerator Enumerator(MonitorId id, string name = "PG32UCWM") => new SingleMonitorEnumerator(this, id, name);
 
     private VcpReply Get(int generation, byte code)
     {
@@ -205,8 +239,8 @@ internal sealed class SimulatedMonitor
         }
     }
 
-    private sealed class SingleMonitorEnumerator(SimulatedMonitor monitor, MonitorId id) : IMonitorEnumerator
+    private sealed class SingleMonitorEnumerator(SimulatedMonitor monitor, MonitorId id, string name) : IMonitorEnumerator
     {
-        public IReadOnlyList<MonitorConnection> Enumerate() => [new MonitorConnection(id, "PG32UCWM", monitor.OpenChannel())];
+        public IReadOnlyList<MonitorConnection> Enumerate() => [new MonitorConnection(id, name, monitor.OpenChannel())];
     }
 }
