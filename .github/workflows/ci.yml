@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to stamp into the build; empty for the version in Directory.Build.props
+        type: string
+        required: false
 
 jobs:
   build:
@@ -23,3 +29,21 @@ jobs:
 
       - name: Test
         run: dotnet test --solution DisplayToolkit.slnx --configuration Release --no-build
+
+      # Builds the same artifacts the tag-triggered release workflow builds (zip and msi), downloadable from the run.
+      - name: Publish
+        if: github.event != 'pull_request'
+        shell: pwsh
+        env:
+          CI_VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:CI_VERSION) { ./build/publish.ps1 -Version $env:CI_VERSION } else { ./build/publish.ps1 }
+
+      - name: Upload artifacts
+        if: github.event != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DisplayToolkit
+          path: |
+            artifacts/*.zip
+            artifacts/*.msi
