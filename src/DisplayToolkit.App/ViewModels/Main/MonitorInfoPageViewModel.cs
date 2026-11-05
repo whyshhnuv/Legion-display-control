@@ -27,8 +27,9 @@ public sealed partial class MonitorInfoPageViewModel(MonitorViewModel monitor) :
     [ObservableProperty]
     public partial string Firmware { get; private set; } = "Reading…";
 
+    /// <summary>The vendor-specific VCP version line, or the vendor's name when it has no such register.</summary>
     [ObservableProperty]
-    public partial string AsusVcpVersion { get; private set; } = "Reading…";
+    public partial string ProtocolInfo { get; private set; } = "Reading…";
 
     [ObservableProperty]
     public partial IReadOnlyList<FeatureRow> Features { get; private set; } = [];
@@ -43,10 +44,15 @@ public sealed partial class MonitorInfoPageViewModel(MonitorViewModel monitor) :
     {
         UpdateFeatures();
 
-        var firmware = await Monitor.Session.ReadRawAsync(Vcp.AsusFirmware);
+        // 0xFF/0xEF are the ASUS version registers. Lenovo's firmware version lives in 0xC9, whose three-byte reply
+        // doesn't fit the 16-bit dxva2 transport, so it can't be read here.
+        var isAsus = Monitor.Session.Id.Model.StartsWith("AUS", System.StringComparison.OrdinalIgnoreCase);
+        var firmware = isAsus ? await Monitor.Session.ReadRawAsync(Vcp.AsusFirmware) : null;
         Firmware = firmware is { } reply ? reply.Maximum.ToString(System.Globalization.CultureInfo.InvariantCulture) : "Unknown";
-        var version = await Monitor.Session.ReadRawAsync(Vcp.AsusVcpVersion);
-        AsusVcpVersion = version is { } v ? $"{(v.Maximum >> 8) & 0xFF}.{v.Maximum & 0xFF:X2}" : "Unknown";
+        var version = isAsus ? await Monitor.Session.ReadRawAsync(Vcp.AsusVcpVersion) : null;
+        ProtocolInfo = isAsus
+            ? $"ASUS VCP {(version is { } v ? $"{(v.Maximum >> 8) & 0xFF}.{v.Maximum & 0xFF:X2}" : "Unknown")} · MCCS {MccsVersion}"
+            : $"Lenovo monitor · MCCS {MccsVersion}";
 
         await Monitor.RefreshAsync();
         UpdateFeatures();
@@ -65,7 +71,7 @@ public sealed partial class MonitorInfoPageViewModel(MonitorViewModel monitor) :
             FormattableString.Invariant($"Windows {Environment.OSVersion.Version}"),
             $"Monitor: {Monitor.Name} ({Model})",
             $"Link: {Link}",
-            $"Firmware: {Firmware}, ASUS VCP {AsusVcpVersion}, MCCS {MccsVersion}",
+            $"Firmware: {Firmware}; {ProtocolInfo}",
             $"Capabilities: {Capabilities}",
             string.Empty,
             .. Features.Select(row => $"{row.Code} {row.Name}: {row.Value}"),

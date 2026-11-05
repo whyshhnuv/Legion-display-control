@@ -298,6 +298,9 @@ public sealed partial class SettingsPageViewModel : MainPageViewModel
 
     public FeatureState? KeyLock => Monitor?[FeatureCatalog.KeyLock];
 
+    /// <summary>Lenovo's 0xF6 bit 0: the same "ignore the monitor's buttons" as KeyLock, on a different register.</summary>
+    public FeatureState? LockMonitor => Monitor?[FeatureCatalog.LockMonitor];
+
     public FeatureState? PowerKeyLock => Monitor?[FeatureCatalog.PowerKeyLock];
 
     public FeatureState? InputAutoDetection => Monitor?[FeatureCatalog.InputAutoDetection];
@@ -316,7 +319,8 @@ public sealed partial class SettingsPageViewModel : MainPageViewModel
         : "Attach display-toolkit.log to bug reports.";
 
     public override Task OnShownAsync() => Monitor?.RefreshAsync(
-        [FeatureCatalog.PowerIndicator, FeatureCatalog.KeyLock, FeatureCatalog.PowerKeyLock, FeatureCatalog.InputAutoDetection])
+        [FeatureCatalog.PowerIndicator, FeatureCatalog.KeyLock, FeatureCatalog.PowerKeyLock, FeatureCatalog.InputAutoDetection,
+         FeatureCatalog.LockMonitor])
         ?? Task.CompletedTask;
 
     [RelayCommand]

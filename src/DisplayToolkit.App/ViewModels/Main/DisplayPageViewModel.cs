@@ -149,6 +149,19 @@ public sealed partial class DisplayPageViewModel : MainPageViewModel
 
     public FeatureState? UpscalingSharpness => Monitor[FeatureCatalog.UpscalingSharpness];
 
+    // Lenovo gaming and display settings
+    public FeatureState? GameMode => Monitor[FeatureCatalog.GameMode];
+
+    public FeatureState? Overdrive => Monitor[FeatureCatalog.Overdrive];
+
+    public FeatureState? DynamicContrastRatio => Monitor[FeatureCatalog.DynamicContrastRatio];
+
+    public FeatureState? DisplayScaling => Monitor[FeatureCatalog.DisplayScalingFeature];
+
+    public FeatureState? LenovoHdr => Monitor[FeatureCatalog.LenovoHdr];
+
+    public FeatureState? RefreshRateDisplay => Monitor[FeatureCatalog.RefreshRateDisplay];
+
     // Lighting
     public FeatureState? AuraEffect => Monitor[FeatureCatalog.AuraEffect];
 

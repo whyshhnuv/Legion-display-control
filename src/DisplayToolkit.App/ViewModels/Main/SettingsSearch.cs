@@ -23,8 +23,6 @@ public static class SettingsSearch
 {
     private const string Display = "Display";
     private const string Automation = "Profiles & automation";
-    private const string OledCare = "OLED care";
-    private const string GamePlus = "GamePlus";
     private const string Settings = "Settings";
 
     /// <summary>The Display page's six-axis color sub-page.</summary>
@@ -58,6 +56,12 @@ public static class SettingsSearch
         new("Reset picture mode", Display, "factory defaults restore", FeatureCatalog.PictureMode, Card: "Picture mode"),
         new("Blue light filter", Display, "night eye care tüv low blue light", FeatureCatalog.BlueLightFilter),
         new("Shadow boost", Display, "dark black detail dynamic", FeatureCatalog.ShadowBoost),
+        new("Game mode", Display, "gaming preset genre fps rts moba act", FeatureCatalog.GameMode),
+        new("Response overdrive", Display, "overdrive response ghosting", FeatureCatalog.Overdrive),
+        new("Dynamic contrast ratio", Display, "contrast boost dcr", FeatureCatalog.DynamicContrastRatio),
+        new("Display scaling", Display, "aspect ratio scaling fit full screen", FeatureCatalog.DisplayScalingFeature),
+        new("Monitor HDR mode", Display, "hdr lenovo preset auto", FeatureCatalog.LenovoHdr),
+        new("Refresh rate display", Display, "hz on screen rate counter", FeatureCatalog.RefreshRateDisplay),
         new("Variable refresh rate", Display, "vrr g-sync freesync adaptive-sync", FeatureCatalog.VariableRefreshRate),
         new("Upscaling sharpness (Smart Pixel)", Display, "smart pixel upscale resolution 1080p detail", FeatureCatalog.UpscalingSharpness),
         new("Frame-rate boost", Display, "dual mode resolution refresh", FeatureCatalog.FrameRateBoost),
@@ -70,24 +74,8 @@ public static class SettingsSearch
         new("Automation", Automation, "rules schedule time app game power battery", NeedsMonitor: true),
         new("Follow the sun", Automation, "sunrise sunset day night warmth brightness", NeedsMonitor: true),
 
-        new("Pixel cleaning", OledCare, "burn-in image retention refresh", FeatureCatalog.PixelCleaning),
-        new("Screen dimming", OledCare, "burn-in static", FeatureCatalog.ScreenDimming),
-        new("Logo detection", OledCare, "burn-in static", FeatureCatalog.LogoDetection),
-        new("Taskbar detection", OledCare, "burn-in static", FeatureCatalog.TaskbarDetection),
-        new("Boundary detection", OledCare, "burn-in static", FeatureCatalog.BoundaryDetection),
-        new("Outer dimming", OledCare, "", FeatureCatalog.OuterDimming),
-        new("Global dimming", OledCare, "abl", FeatureCatalog.GlobalDimming),
-        new("Uniform brightness", OledCare, "abl", FeatureCatalog.UniformBrightness),
-        new("Anti-flicker", OledCare, "flicker vrr", FeatureCatalog.OledAntiFlicker),
-        new("Screen move", OledCare, "pixel shift orbit burn-in", FeatureCatalog.ScreenMove),
-        new("Turn the screen off when I leave", OledCare, "proximity sensor presence away", FeatureCatalog.ProximityDistance),
-
-        new("Crosshair", GamePlus, "aim reticle", FeatureCatalog.Crosshair),
-        new("FPS counter", GamePlus, "frame rate refresh", FeatureCatalog.FpsCounter),
-        new("Timer", GamePlus, "countdown", FeatureCatalog.Timer),
-        new("Position", GamePlus, "move fps counter timer overlay gameplus position place", NeedsMonitor: true),
-        new("Display alignment", GamePlus, "lines multiple monitors", FeatureCatalog.DisplayAlignment),
-        TargetMode,
+        
+                TargetMode,
 
         new("Start with Windows", Settings, "startup login boot autostart"),
         new("App theme", Settings, "dark light mode"),
@@ -100,6 +88,7 @@ public static class SettingsSearch
         new("Power light", Settings, "led indicator", FeatureCatalog.PowerIndicator),
         new("Lock menu buttons", Settings, "key lock osd joystick", FeatureCatalog.KeyLock),
         new("Lock power button", Settings, "key lock", FeatureCatalog.PowerKeyLock),
+        new("Lock monitor buttons", Settings, "key lock osd lenovo", FeatureCatalog.LockMonitor),
         new("Monitor menu", Settings, "osd on-screen remote joystick buttons keys", NeedsMonitor: true),
         new("Find input automatically", Settings, "auto input detection source", FeatureCatalog.InputAutoDetection),
         new("Check for updates", Settings, "version new release download"),

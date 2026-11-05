@@ -132,6 +132,10 @@
                              Visibility="{Binding PowerKeyLock, Converter={StaticResource VisibleWhenNotNull}}">
         <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding PowerKeyLock.Toggled, Mode=TwoWay}" AutomationProperties.Name="Lock power button" />
       </controls:SettingsCard>
+      <controls:SettingsCard Header="Lock monitor buttons" HeaderIcon="&#xE72E;" Description="Ignores the monitor's own buttons. Display Toolkit still works."
+                             Visibility="{Binding LockMonitor, Converter={StaticResource VisibleWhenNotNull}}">
+        <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding LockMonitor.Toggled, Mode=TwoWay}" AutomationProperties.Name="Lock monitor buttons" />
+      </controls:SettingsCard>
       <controls:SettingsExpander Header="Monitor menu" HeaderIcon="&#xE700;"
                                  Description="Use the monitor's own on-screen menu from here, without reaching for its buttons."
                                  Visibility="{Binding CanUseMonitorMenu, Converter={StaticResource VisibleWhenTrue}}">

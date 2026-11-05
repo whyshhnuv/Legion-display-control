@@ -27,7 +27,7 @@ public static class TileCatalog
 {
     /// <summary>The layout a monitor starts with (design spec §13). Unsupported tiles are skipped.</summary>
     public static IReadOnlyList<string> DefaultLayout { get; } =
-        ["picture-mode", "hdr", "blue-light", "shadow-boost", "crosshair", "oled-anti-flicker"];
+        ["picture-mode", "hdr", "blue-light", "shadow-boost"];
 
     public static IReadOnlyList<TileDefinition> All { get; } =
     [
@@ -44,16 +44,13 @@ public static class TileCatalog
         Levels("shadow-boost", "", FeatureCatalog.ShadowBoost, "Gaming and comfort", defaultLevel: 1),
         Switch("vrr", "", FeatureCatalog.VariableRefreshRate, "Gaming and comfort", "Variable refresh"),
         Switch("frame-rate-boost", "", FeatureCatalog.FrameRateBoost, "Gaming and comfort"),
+        Picker("game-mode", "", FeatureCatalog.GameMode, "Gaming and comfort"),
+        Picker("overdrive", "", FeatureCatalog.Overdrive, "Gaming and comfort"),
+        Switch("dynamic-contrast-ratio", "", FeatureCatalog.DynamicContrastRatio, "Gaming and comfort"),
+        Switch("refresh-rate-display", "", FeatureCatalog.RefreshRateDisplay, "Gaming and comfort", "Refresh rate"),
 
-        Styles("crosshair", "", FeatureCatalog.Crosshair, "GamePlus"),
-        Picker("fps-counter", "", FeatureCatalog.FpsCounter, "GamePlus"),
-        Picker("timer", "", FeatureCatalog.Timer, "GamePlus"),
-        Switch("display-alignment", "", FeatureCatalog.DisplayAlignment, "GamePlus", "Alignment"),
         new("target-mode", "Target mode", "Focus", "Toggle", _ => true, context => new TargetModeTileViewModel(context.TargetMode)),
 
-        Switch("oled-anti-flicker", "", FeatureCatalog.OledAntiFlicker, "OLED care", "Anti-flicker"),
-        Switch("uniform-brightness", "", FeatureCatalog.UniformBrightness, "OLED care"),
-        Styles("screen-move", "", FeatureCatalog.ScreenMove, "OLED care"),
 
         Picker("aura", "\uEA80", FeatureCatalog.AuraEffect, "Lighting", "Aura"),
 

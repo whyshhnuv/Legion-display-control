@@ -21,10 +21,8 @@
     <controls:SettingsCard Header="Model id"><TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Model}" /></controls:SettingsCard>
     <controls:SettingsCard Header="Connection"><TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Link}" /></controls:SettingsCard>
     <controls:SettingsCard Header="Firmware"><TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Firmware}" /></controls:SettingsCard>
-    <controls:SettingsCard Header="Protocol" Description="ASUS VCP version and MCCS version">
-      <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-        <Run Text="{Binding AsusVcpVersion, Mode=OneWay}" /> · MCCS <Run Text="{Binding MccsVersion, Mode=OneWay}" />
-      </TextBlock>
+    <controls:SettingsCard Header="Protocol" Description="The monitor's DDC/CI version information">
+      <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding ProtocolInfo, Mode=OneWay}" />
     </controls:SettingsCard>
     <controls:SettingsCard Header="Device path">
       <TextBlock MaxWidth="460" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding DevicePath}" />

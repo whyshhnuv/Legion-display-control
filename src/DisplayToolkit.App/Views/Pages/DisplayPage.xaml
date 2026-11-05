@@ -119,9 +119,16 @@
                 SelectedItem="{Binding HdrMode.SelectedOption, Mode=TwoWay}" AutomationProperties.Name="HDR mode" />
     </controls:SettingsCard>
 
+    <controls:SettingsCard Header="Monitor HDR mode" HeaderIcon="&#xE790;"
+                           Description="The monitor's own HDR setting. With Windows HDR on the monitor chooses it itself."
+                           Visibility="{Binding LenovoHdr.IsAvailable, Converter={StaticResource VisibleWhenTrue}, FallbackValue=Collapsed}">
+      <ComboBox MinWidth="200" ItemsSource="{Binding LenovoHdr.Options}" DisplayMemberPath="Name"
+                SelectedItem="{Binding LenovoHdr.SelectedOption, Mode=TwoWay}" AutomationProperties.Name="Monitor HDR mode" />
+    </controls:SettingsCard>
+
     <!-- Color: SDR only. -->
     <StackPanel Visibility="{Binding IsSdr, Converter={StaticResource VisibleWhenTrue}}">
-      <controls:SettingsExpander Header="Color" HeaderIcon="&#xE9CA;" Description="Gamut, temperature, gamma, saturation and sharpness for the current picture mode"
+      <controls:SettingsExpander Header="Color" HeaderIcon="&#xE9CA;" Description="Gamut, temperature, gamma, saturation, sharpness and scaling for the current picture mode"
                                  Visibility="{Binding HasColorSettings, Converter={StaticResource VisibleWhenTrue}}">
         <StackPanel>
           <controls:SettingsCard IsNested="True" Header="Color gamut" Description="sRGB matches most content; native shows the panel's full range."
@@ -178,6 +185,12 @@
               <TextBlock Width="36" VerticalAlignment="Center" TextAlignment="Right" Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding Sharpness.Value}" />
             </StackPanel>
           </controls:SettingsCard>
+
+          <controls:SettingsCard IsNested="True" Header="Display scaling" Description="How the picture is fitted to the panel."
+                                 Visibility="{Binding DisplayScaling, Converter={StaticResource VisibleWhenNotNull}}">
+            <ComboBox MinWidth="200" ItemsSource="{Binding DisplayScaling.Options}" DisplayMemberPath="Name"
+                      SelectedItem="{Binding DisplayScaling.SelectedOption, Mode=TwoWay}" AutomationProperties.Name="Display scaling" />
+          </controls:SettingsCard>
         </StackPanel>
       </controls:SettingsExpander>
 
@@ -218,6 +231,31 @@
                            Description="Sharpens the picture when the input is below the panel's resolution, for example with frame-rate boost."
                            Visibility="{Binding UpscalingSharpness.IsAvailable, Converter={StaticResource VisibleWhenTrue}, FallbackValue=Collapsed}">
       <ItemsControl Width="240" Style="{StaticResource SegmentedChoices}" ItemsSource="{Binding UpscalingSharpness.Choices}" />
+    </controls:SettingsCard>
+
+    <controls:SettingsCard Header="Game mode" HeaderIcon="&#xEC4A;"
+                           Description="The picture the monitor tunes for a genre of game."
+                           Visibility="{Binding GameMode.IsAvailable, Converter={StaticResource VisibleWhenTrue}, FallbackValue=Collapsed}">
+      <ComboBox MinWidth="200" ItemsSource="{Binding GameMode.Options}" DisplayMemberPath="Name"
+                SelectedItem="{Binding GameMode.SelectedOption, Mode=TwoWay}" AutomationProperties.Name="Game mode" />
+    </controls:SettingsCard>
+
+    <controls:SettingsCard Header="Response overdrive" HeaderIcon="&#xE73E;"
+                           Description="How fast the panel chases a new picture; too much overshoots into ghosting."
+                           Visibility="{Binding Overdrive.IsAvailable, Converter={StaticResource VisibleWhenTrue}, FallbackValue=Collapsed}">
+      <ItemsControl Width="320" Style="{StaticResource SegmentedChoices}" ItemsSource="{Binding Overdrive.Choices}" />
+    </controls:SettingsCard>
+
+    <controls:SettingsCard Header="Dynamic contrast ratio" HeaderIcon="&#xE7A1;"
+                           Description="Boosts contrast in dark scenes by lowering the backlight."
+                           Visibility="{Binding DynamicContrastRatio.IsAvailable, Converter={StaticResource VisibleWhenTrue}, FallbackValue=Collapsed}">
+      <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding DynamicContrastRatio.Toggled, Mode=TwoWay}" AutomationProperties.Name="Dynamic contrast ratio" />
+    </controls:SettingsCard>
+
+    <controls:SettingsCard Header="Refresh rate display" HeaderIcon="&#xE945;"
+                           Description="Shows the current refresh rate on the screen."
+                           Visibility="{Binding RefreshRateDisplay.IsAvailable, Converter={StaticResource VisibleWhenTrue}, FallbackValue=Collapsed}">
+      <CheckBox Style="{StaticResource SettingsToggle}" IsChecked="{Binding RefreshRateDisplay.Toggled, Mode=TwoWay}" AutomationProperties.Name="Refresh rate display" />
     </controls:SettingsCard>
 
     <!-- ======================================================== Lighting -->
