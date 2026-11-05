@@ -19,7 +19,8 @@ internal sealed class CapabilitiesCache(ILogger<CapabilitiesCache> logger)
     {
         lock (_gate)
         {
-            return Load().TryGetValue(model, out var raw) ? CapabilitiesParser.Parse(raw) : null;
+            // The key is the EDID model, which carries the manufacturer.
+            return Load().TryGetValue(model, out var raw) ? CapabilitiesParser.Parse(raw, model.FromEdidModel()) : null;
         }
     }
 

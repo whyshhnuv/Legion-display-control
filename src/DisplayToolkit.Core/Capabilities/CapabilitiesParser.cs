@@ -12,7 +12,11 @@ namespace DisplayToolkit.Core.Capabilities;
 /// </remarks>
 public static class CapabilitiesParser
 {
-    public static MonitorCapabilities Parse(string? raw)
+    /// <param name="vendor">
+    /// From the EDID model, not the string: the <c>model()</c> section holds a marketing name ("Legion 24-10"),
+    /// so it can't identify the manufacturer.
+    /// </param>
+    public static MonitorCapabilities Parse(string? raw, MonitorVendor vendor = MonitorVendor.Unknown)
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
@@ -26,6 +30,7 @@ public static class CapabilitiesParser
             raw,
             sections.GetValueOrDefault("model")?.Trim(),
             sections.GetValueOrDefault("mccs_ver")?.Trim(),
+            vendor,
             vcp);
     }
 

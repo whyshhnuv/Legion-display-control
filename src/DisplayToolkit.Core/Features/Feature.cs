@@ -24,6 +24,13 @@ public abstract class Feature(string id, string name, byte code)
     public bool AvailableInHdr { get; init; } = true;
 
     /// <summary>
+    /// The vendors whose meaning of <see cref="Code"/> this feature implements, or null for all. Vendor-specific VCP
+    /// codes overlap (0xE0 is Overdrive on a Lenovo and a different setting on an ASUS), so a feature that claims a
+    /// vendor only shows when the monitor is one of those.
+    /// </summary>
+    public IReadOnlySet<MonitorVendor>? Vendors { get; init; }
+
+    /// <summary>
     /// True for settings the monitor reports but won't let apps change: it accepts the write and then resets the value
     /// (proximity sensitivity on the PG32UCWM, also from ASUS's own app). Change them in the monitor's menu.
     /// </summary>
@@ -34,6 +41,12 @@ public abstract class Feature(string id, string name, byte code)
     /// change only this feature's bits.
     /// </summary>
     public virtual bool IsPartialRegister => false;
+
+    /// <summary>
+    /// Other registers the monitor changes when this one is written (a game mode retunes brightness, color
+    /// temperature, gamma and overdrive). They are re-read after a confirmed write so the UI shows the side effects.
+    /// </summary>
+    public IReadOnlyList<byte> AffectedCodes { get; init; } = [];
 
     /// <summary>
     /// Choices the monitor only leaves for another one through 0 (off): changing away from them writes 0 first. Aura
@@ -48,6 +61,10 @@ public abstract class Feature(string id, string name, byte code)
     public virtual bool NeedsConfirmation(uint value) => false;
 
     public abstract bool IsSupportedBy(MonitorCapabilities capabilities);
+
+    /// <summary>Whether <see cref="Vendors"/> (when set) allows the monitor's vendor. Always true for standard features.</summary>
+    protected bool VendorMatches(MonitorCapabilities capabilities) =>
+        Vendors is null || Vendors.Contains(capabilities.Vendor);
 
     /// <summary>Extracts this feature's value from a register reply.</summary>
     public virtual uint Decode(VcpReply reply) => reply.Current;

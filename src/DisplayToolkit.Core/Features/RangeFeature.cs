@@ -10,7 +10,7 @@ namespace DisplayToolkit.Core.Features;
 /// </remarks>
 public sealed class RangeFeature(string id, string name, byte code) : Feature(id, name, code)
 {
-    public override bool IsSupportedBy(MonitorCapabilities capabilities) => capabilities.Supports(Code);
+    public override bool IsSupportedBy(MonitorCapabilities capabilities) => capabilities.Supports(Code) && VendorMatches(capabilities);
 
     public override uint Decode(VcpReply reply) => reply.Current & 0xFFFF;
 

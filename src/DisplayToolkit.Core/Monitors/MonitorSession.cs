@@ -70,7 +70,9 @@ public sealed class MonitorSession : IDisposable
         var session = new MonitorSession(connection, enumerator, options ?? MonitorSessionOptions.Default, logger ?? NullLogger.Instance);
         try
         {
-            var capabilities = knownCapabilities ?? await session._worker.Enqueue(session.ReadCapabilities);
+            // A capabilities string can't name the manufacturer (its model() is a marketing name), so the vendor
+            // comes from the EDID model; a cached string is already tagged by the cache.
+            var capabilities = knownCapabilities ?? await session._worker.Enqueue(() => session.ReadCapabilities(connection.Id.Model.FromEdidModel()));
             session.Capabilities = capabilities;
             session.Features = [.. FeatureCatalog.All.Where(feature => feature.IsSupportedBy(capabilities))];
             await session.RefreshAsync();
@@ -291,7 +293,7 @@ public sealed class MonitorSession : IDisposable
     /// when another program (such as ASUS DisplayWidget Center) is using the bus. It gets its own, more patient retries;
     /// a garbled reply without any VCP codes counts as a failure.
     /// </summary>
-    private MonitorCapabilities ReadCapabilities()
+    private MonitorCapabilities ReadCapabilities(MonitorVendor vendor)
     {
         DdcException? lastError = null;
         for (var attempt = 0; attempt < _options.CapabilitiesAttempts; attempt++)
@@ -303,7 +305,7 @@ public sealed class MonitorSession : IDisposable
 
             try
             {
-                var capabilities = CapabilitiesParser.Parse(_channel.GetCapabilities());
+                var capabilities = CapabilitiesParser.Parse(_channel.GetCapabilities(), vendor);
                 if (capabilities.VcpCodes.Any())
                 {
                     return capabilities;
@@ -356,6 +358,18 @@ public sealed class MonitorSession : IDisposable
                 if (reply is { } confirmed && feature.Decode(confirmed) == value)
                 {
                     Publish(feature.Code, confirmed, (feature, sequence));
+                    // A game mode retunes the other picture registers; read them back so the UI shows the side effects.
+                    foreach (var code in feature.AffectedCodes)
+                    {
+                        try
+                        {
+                            Publish(code, _channel.Get(code), null);
+                        }
+                        catch (DdcException)
+                        {
+                            // The side effect is a read-back nicety; its own failure must not fail the write.
+                        }
+                    }
                     return new FeatureValue(feature, feature.Decode(confirmed), feature.DecodeMaximum(confirmed), FeatureStatus.Confirmed);
                 }
                 problem = reply switch

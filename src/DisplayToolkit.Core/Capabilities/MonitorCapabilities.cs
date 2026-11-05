@@ -5,15 +5,18 @@ namespace DisplayToolkit.Core.Capabilities;
 /// <summary>What a monitor says it supports, parsed from its MCCS capabilities string.</summary>
 public sealed class MonitorCapabilities
 {
-    public static readonly MonitorCapabilities Empty = new(string.Empty, null, null, new Dictionary<byte, IReadOnlyList<uint>>());
+    public static readonly MonitorCapabilities Empty = new(string.Empty, null, null, MonitorVendor.Unknown,
+        new Dictionary<byte, IReadOnlyList<uint>>());
 
     private readonly FrozenDictionary<byte, IReadOnlyList<uint>> _vcp;
 
-    public MonitorCapabilities(string raw, string? model, string? mccsVersion, IReadOnlyDictionary<byte, IReadOnlyList<uint>> vcp)
+    public MonitorCapabilities(string raw, string? model, string? mccsVersion, MonitorVendor vendor,
+        IReadOnlyDictionary<byte, IReadOnlyList<uint>> vcp)
     {
         Raw = raw;
         Model = model;
         MccsVersion = mccsVersion;
+        Vendor = vendor;
         _vcp = vcp.ToFrozenDictionary();
     }
 
@@ -21,6 +24,9 @@ public sealed class MonitorCapabilities
     public string Raw { get; }
 
     public string? Model { get; }
+
+    /// <summary>Who built the monitor; decides which vendor-specific VCP codes apply. See <see cref="MonitorVendor"/>.</summary>
+    public MonitorVendor Vendor { get; }
 
     public string? MccsVersion { get; }
 
