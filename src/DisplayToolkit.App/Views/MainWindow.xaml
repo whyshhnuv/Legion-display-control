@@ -27,8 +27,6 @@
     <DataTemplate DataType="{x:Type main:DisplayPageViewModel}"><pages:DisplayPage /></DataTemplate>
     <DataTemplate DataType="{x:Type main:SixAxisPageViewModel}"><pages:SixAxisPage /></DataTemplate>
     <DataTemplate DataType="{x:Type main:MonitorInfoPageViewModel}"><pages:MonitorInfoPage /></DataTemplate>
-    <DataTemplate DataType="{x:Type main:OledCarePageViewModel}"><pages:OledCarePage /></DataTemplate>
-    <DataTemplate DataType="{x:Type main:GamePlusPageViewModel}"><pages:GamePlusPage /></DataTemplate>
     <DataTemplate DataType="{x:Type main:SettingsPageViewModel}"><pages:SettingsPage /></DataTemplate>
     <DataTemplate DataType="{x:Type main:AutomationPageViewModel}"><pages:AutomationPage /></DataTemplate>
     <DataTemplate DataType="{x:Type automation:RuleDialogViewModel}"><views:RuleDialog /></DataTemplate>

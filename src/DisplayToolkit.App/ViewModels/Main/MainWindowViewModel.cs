@@ -255,8 +255,6 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IMainWindo
             ? [
                 new("Display", "", () => new DisplayPageViewModel(monitor, this, () => _automation.Automation.SunCycle.IsEnabled)),
                 new("Profiles & automation", "", () => new AutomationPageViewModel(monitor, _automation, _location, this)),
-                new("OLED care", "", () => new OledCarePageViewModel(monitor, this)),
-                new("GamePlus", "", () => new GamePlusPageViewModel(monitor)),
             ]
             : [];
 
