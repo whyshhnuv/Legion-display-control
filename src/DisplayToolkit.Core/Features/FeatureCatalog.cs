@@ -1,11 +1,18 @@
+using DisplayToolkit.Core.Capabilities;
+
 namespace DisplayToolkit.Core.Features;
 
 /// <summary>
-/// Every monitor setting Display Toolkit knows about. A monitor exposes the subset its capabilities string supports.
-/// Values and semantics are documented and hardware-verified in <c>docs/research/asus-ddc-protocol.md</c>.
+/// Every monitor setting Display Toolkit knows about. A monitor exposes the subset its capabilities string supports,
+/// and features that name a vendor only apply to that vendor (ASUS and Lenovo's vendor VCP codes overlap). Values and
+/// semantics: ASUS in <c>docs/research/asus-ddc-protocol.md</c>, Lenovo in <c>docs/research/lenovo-ddc-protocol.md</c>.
 /// </summary>
 public static class FeatureCatalog
 {
+    /// <summary>The vendor-specific (0xE0-0xFF) settings are only these vendors' own.</summary>
+    private static readonly HashSet<MonitorVendor> Asus = [MonitorVendor.Asus];
+    private static readonly HashSet<MonitorVendor> Lenovo = [MonitorVendor.Lenovo];
+
     // Picture
     // Settings marked AvailableInHdr = false are greyed out by ASUS DisplayWidget Center in HDR, and brightness
     // writes were verified to have no effect in HDR on a PG32UCWM.
@@ -31,6 +38,7 @@ public static class FeatureCatalog
     {
         // In HDR the register reads 5 (Racing in SDR) regardless of the preset.
         AvailableInHdr = false,
+        Vendors = Asus,
     };
 
     /// <summary>
@@ -45,6 +53,7 @@ public static class FeatureCatalog
     ])
     {
         AvailableInHdr = false,
+        Vendors = Asus,
     };
 
     // Group/preset pairs. HDR10 presets are hardware-verified; the Dolby Vision pairing (group 2 with presets 5–7)
@@ -61,17 +70,19 @@ public static class FeatureCatalog
     ])
     {
         Settling = WriteSettling.ModeSwitch,
+        Vendors = Asus,
     };
 
     // Color
+    // 0x14 is a Kelvin list on an ASUS but a named color preset on a Lenovo; the per-vendor names come from each vendor's OSD.
     public static readonly EnumFeature ColorTemperature = new("color-temperature", "Color temperature", Vcp.ColorPreset,
     [
         new(3, "4000K"),
         new(4, "5000K"),
-        new(5, "6500K"),
-        new(6, "7500K"),
+        FeatureOption.Named(5, "6500K", MonitorVendor.Lenovo, "Warm"),
+        FeatureOption.Named(6, "7500K", MonitorVendor.Lenovo, "Neutral"),
         new(7, "8200K"),
-        new(8, "9300K"),
+        FeatureOption.Named(8, "9300K", MonitorVendor.Lenovo, "Cool"),
         new(9, "10000K"),
         new(11, "Custom"), // "User" in the monitor's menu, which clashes with the User picture mode.
     ]);
@@ -80,13 +91,14 @@ public static class FeatureCatalog
     public static readonly RangeFeature GreenGain = new("green-gain", "Green", Vcp.GreenGain);
     public static readonly RangeFeature BlueGain = new("blue-gain", "Blue", Vcp.BlueGain);
 
+    // The Legion's OSD shows the steps as offsets from the 2.2 default, so the label carries both on a Lenovo.
     public static readonly EnumFeature Gamma = new("gamma", "Gamma", Vcp.Gamma,
     [
-        new(0x5000, "1.8"),
-        new(0x6400, "2.0"),
+        FeatureOption.Named(0x5000, "1.8", MonitorVendor.Lenovo, "1.8 (−0.4)"),
+        FeatureOption.Named(0x6400, "2.0", MonitorVendor.Lenovo, "2.0 (−0.2)"),
         new(0x7800, "2.2"),
-        new(0x8C00, "2.4"),
-        new(0xA000, "2.6"),
+        FeatureOption.Named(0x8C00, "2.4", MonitorVendor.Lenovo, "2.4 (+0.2)"),
+        FeatureOption.Named(0xA000, "2.6", MonitorVendor.Lenovo, "2.6 (+0.4)"),
     ]);
 
     public static readonly RangeFeature SaturationRed = new("saturation-red", "Red saturation", Vcp.SaturationRed);
@@ -97,22 +109,38 @@ public static class FeatureCatalog
     public static readonly RangeFeature SaturationMagenta = new("saturation-magenta", "Magenta saturation", Vcp.SaturationMagenta);
 
     // Gaming and comfort
-    public static readonly RangeFeature BlueLightFilter = new("blue-light", "Blue light filter", Vcp.AsusBlueLightFilter) { AvailableInHdr = false };
-    public static readonly RangeFeature ShadowBoost = new("shadow-boost", "Shadow boost", Vcp.AsusShadowBoost) { AvailableInHdr = false };
+    public static readonly RangeFeature BlueLightFilter = new("blue-light", "Blue light filter", Vcp.AsusBlueLightFilter)
+    {
+        AvailableInHdr = false,
+        Vendors = Asus,
+    };
+    public static readonly RangeFeature ShadowBoost = new("shadow-boost", "Shadow boost", Vcp.AsusShadowBoost)
+    {
+        AvailableInHdr = false,
+        Vendors = Asus,
+    };
     // Both change the signal timing, so Windows drops and re-detects the monitor (VRR verified on a PG32UCWM).
     public static readonly FlagFeature VariableRefreshRate = new("vrr", "Variable refresh rate", Vcp.AsusToggles2, bit: 0)
     {
         Settling = WriteSettling.ModeSwitch,
+        Vendors = Asus,
     };
 
     public static readonly FlagFeature FrameRateBoost = new("frame-rate-boost", "Frame-rate boost", Vcp.AsusToggles2, bit: 8)
     {
         Settling = WriteSettling.ModeSwitch,
+        Vendors = Asus,
     };
     /// <summary>Sharpens the picture when the monitor scales up a lower resolution. 0 is off.</summary>
-    public static readonly RangeFeature UpscalingSharpness = new("upscaling-sharpness", "Upscaling sharpness (Smart Pixel)", Vcp.AsusUpscalingSharpness);
+    public static readonly RangeFeature UpscalingSharpness = new("upscaling-sharpness", "Upscaling sharpness (Smart Pixel)", Vcp.AsusUpscalingSharpness)
+    {
+        Vendors = Asus,
+    };
 
-    public static readonly SwitchFeature Elmb = new("elmb", "ELMB", Vcp.AsusElmb);
+    public static readonly SwitchFeature Elmb = new("elmb", "ELMB", Vcp.AsusElmb)
+    {
+        Vendors = Asus,
+    };
 
     // GamePlus (overlays drawn by the monitor)
     public static readonly EnumFeature Crosshair = new("crosshair", "Crosshair", Vcp.AsusCrosshair,
@@ -129,14 +157,20 @@ public static class FeatureCatalog
         new(13, "Adaptive dot"),
         new(14, "Adaptive crosshair, small"),
         new(15, "Adaptive crosshair, large"),
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
     public static readonly EnumFeature FpsCounter = new("fps-counter", "FPS counter", Vcp.AsusFpsCounter,
     [
         new(0, "Off"),
         new(1, "Number"),
         new(2, "Bar"),
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
     public static readonly EnumFeature Timer = new("timer", "Timer", Vcp.AsusGamePlusTimer,
     [
@@ -146,29 +180,37 @@ public static class FeatureCatalog
         new(3, "50 s"),
         new(4, "60 s"),
         new(5, "90 s"),
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
-    public static readonly SwitchFeature DisplayAlignment = new("display-alignment", "Display alignment", Vcp.AsusDisplayAlignment);
+    public static readonly SwitchFeature DisplayAlignment = new("display-alignment", "Display alignment", Vcp.AsusDisplayAlignment)
+    {
+        Vendors = Asus,
+    };
 
     // OLED care
-    public static readonly FlagFeature ScreenDimming = new("screen-dimming", "Screen dimming control", Vcp.AsusToggles2, bit: 3);
-    public static readonly FlagFeature LogoDetection = new("logo-detection", "Logo detection", Vcp.AsusToggles2, bit: 5);
-    public static readonly FlagFeature UniformBrightness = new("uniform-brightness", "Uniform brightness", Vcp.AsusToggles2, bit: 6);
-    public static readonly FlagFeature TaskbarDetection = new("taskbar-detection", "Taskbar detection", Vcp.AsusToggles2, bit: 11);
-    public static readonly FlagFeature BoundaryDetection = new("boundary-detection", "Boundary detection", Vcp.AsusToggles2, bit: 12);
-    public static readonly FlagFeature OuterDimming = new("outer-dimming", "Outer dimming control", Vcp.AsusToggles2, bit: 13);
-    public static readonly FlagFeature GlobalDimming = new("global-dimming", "Global dimming control", Vcp.AsusToggles2, bit: 14);
+    public static readonly FlagFeature ScreenDimming = new("screen-dimming", "Screen dimming control", Vcp.AsusToggles2, bit: 3) { Vendors = Asus };
+    public static readonly FlagFeature LogoDetection = new("logo-detection", "Logo detection", Vcp.AsusToggles2, bit: 5) { Vendors = Asus };
+    public static readonly FlagFeature UniformBrightness = new("uniform-brightness", "Uniform brightness", Vcp.AsusToggles2, bit: 6) { Vendors = Asus };
+    public static readonly FlagFeature TaskbarDetection = new("taskbar-detection", "Taskbar detection", Vcp.AsusToggles2, bit: 11) { Vendors = Asus };
+    public static readonly FlagFeature BoundaryDetection = new("boundary-detection", "Boundary detection", Vcp.AsusToggles2, bit: 12) { Vendors = Asus };
+    public static readonly FlagFeature OuterDimming = new("outer-dimming", "Outer dimming control", Vcp.AsusToggles2, bit: 13) { Vendors = Asus };
+    public static readonly FlagFeature GlobalDimming = new("global-dimming", "Global dimming control", Vcp.AsusToggles2, bit: 14) { Vendors = Asus };
 
     /// <summary>Writing 1 starts pixel cleaning: the screen goes dark for about 6 minutes.</summary>
     public static readonly FlagFeature PixelCleaning = new("pixel-cleaning", "Pixel cleaning", Vcp.AsusToggles2, bit: 4)
     {
         Settling = WriteSettling.Unverified,
+        Vendors = Asus,
     };
 
     // Changes the panel timing: Windows drops and re-detects the monitor (verified on a PG32UCWM).
     public static readonly SwitchFeature OledAntiFlicker = new("oled-anti-flicker", "OLED anti-flicker", Vcp.AsusOledAntiFlicker)
     {
         Settling = WriteSettling.ModeSwitch,
+        Vendors = Asus,
     };
 
     public static readonly EnumFeature ScreenMove = new("screen-move", "Screen move", Vcp.AsusScreenMove,
@@ -177,7 +219,10 @@ public static class FeatureCatalog
         new(1, "Light"),
         new(2, "Middle"),
         new(3, "Strong"),
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
     public static readonly EnumFeature PixelCleaningReminder = new("pixel-cleaning-reminder", "Pixel cleaning reminder", Vcp.AsusPixelCleaningReminder,
     [
@@ -185,7 +230,10 @@ public static class FeatureCatalog
         new(2, "2 hours"),
         new(4, "4 hours"),
         new(8, "8 hours"),
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
     // Lighting
     public static readonly ByteFieldFeature AuraEffect = new("aura-effect", "Aura lighting", Vcp.AsusAura, highByte: false,
@@ -200,6 +248,7 @@ public static class FeatureCatalog
     ])
     {
         LeftThroughOff = new HashSet<uint> { 1 },
+        Vendors = Asus,
     };
 
     /// <summary>The color of the Static, Breathing and Strobing effects. Picking one of those without a color gives red.</summary>
@@ -211,7 +260,10 @@ public static class FeatureCatalog
         new(4, "Cyan"),
         new(5, "Magenta"),
         new(6, "Yellow"),
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
     public static readonly ByteFieldFeature ProximityDistance = new("proximity-distance", "Proximity sensor", Vcp.AsusProximitySensor, highByte: false,
     [
@@ -220,7 +272,10 @@ public static class FeatureCatalog
         new(2, "Up to 90 cm"),
         new(1, "Up to 120 cm"),
         new(0xFF, "Tailored") { NeedsConfirmation = true },
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
     public static readonly ByteFieldFeature ProximityScreenOff = new("proximity-screen-off", "Turn screen off after", Vcp.AsusProximitySensor, highByte: true,
     [
@@ -228,11 +283,15 @@ public static class FeatureCatalog
         new(5, "5 minutes"),
         new(10, "10 minutes"),
         new(15, "15 minutes"),
-    ]);
+    ])
+    {
+        Vendors = Asus,
+    };
 
     public static readonly RangeFeature ProximitySensitivity = new("proximity-sensitivity", "Proximity sensitivity", Vcp.AsusProximitySensitivity)
     {
         IsReadOnly = true,
+        Vendors = Asus,
     };
 
     // Input and sound
@@ -251,10 +310,93 @@ public static class FeatureCatalog
     public static readonly SwitchFeature Mute = new("mute", "Mute", Vcp.AudioMute, offValue: 2, onValue: 1);
 
     // Monitor (system setup)
-    public static readonly FlagFeature PowerIndicator = new("power-indicator", "Power indicator", Vcp.AsusToggles1, bit: 0);
-    public static readonly FlagFeature PowerKeyLock = new("power-key-lock", "Power key lock", Vcp.AsusToggles1, bit: 1);
-    public static readonly FlagFeature KeyLock = new("key-lock", "Key lock", Vcp.AsusToggles1, bit: 2);
-    public static readonly FlagFeature InputAutoDetection = new("input-auto-detection", "Input auto-detection", Vcp.AsusToggles1, bit: 4);
+    public static readonly FlagFeature PowerIndicator = new("power-indicator", "Power indicator", Vcp.AsusToggles1, bit: 0) { Vendors = Asus };
+    public static readonly FlagFeature PowerKeyLock = new("power-key-lock", "Power key lock", Vcp.AsusToggles1, bit: 1) { Vendors = Asus };
+    public static readonly FlagFeature KeyLock = new("key-lock", "Key lock", Vcp.AsusToggles1, bit: 2) { Vendors = Asus };
+    public static readonly FlagFeature InputAutoDetection = new("input-auto-detection", "Input auto-detection", Vcp.AsusToggles1, bit: 4) { Vendors = Asus };
+
+    // Lenovo (Legion 24-10). 0x86 and 0x14 share codes with standard MCCS registers that mean different things on
+    // Lenovos (scaling, color preset); the vendor gate keeps the standard features off them.
+    /// <summary>Response overdrive: how fast the panel chases a new picture. Off and the Level settings are what this panel offers.</summary>
+    public static readonly EnumFeature Overdrive = new("overdrive", "Response overdrive", Vcp.LenovoOverdrive,
+    [
+        new(0, "Off"),
+        new(3, "Level 1"),
+        new(4, "Level 2"),
+        new(5, "Level 3"),
+        new(6, "Level 4"),
+    ])
+    {
+        Vendors = Lenovo,
+    };
+
+    /// <summary>Boosts contrast in dark scenes; the panel adjusts its backlight curve.</summary>
+    public static readonly SwitchFeature DynamicContrastRatio = new("dynamic-contrast-ratio", "Dynamic contrast ratio", Vcp.LenovoDynamicContrastRatio)
+    {
+        Vendors = Lenovo,
+    };
+
+    /// <summary>The Lenovo's HDR switch (0x00 off, 0x01 auto). More presets exist on other models; the filter keeps this to what the monitor advertises.</summary>
+    public static readonly EnumFeature LenovoHdr = new("lenovo-hdr", "Monitor HDR mode", Vcp.LenovoHdr,
+    [
+        new(0, "Off"),
+        new(1, "Auto"),
+    ])
+    {
+        Vendors = Lenovo,
+    };
+
+    /// <summary>
+    /// The picture profile for a genre of game. It is a bundle: switching it retunes brightness, color temperature,
+    /// gamma and overdrive, so the session re-reads those after a write. There is no "off" value on this panel — the
+    /// modes cycle, and "Standard" (0x0A) is the register's default.
+    /// </summary>
+    public static readonly EnumFeature GameMode = new("game-mode", "Game mode", Vcp.LenovoGameMode,
+    [
+        new(1, "FPS 1"),
+        new(2, "FPS 2"),
+        new(3, "Racing"),
+        new(4, "RTS"),
+        new(5, "Custom 1"),
+        new(6, "Custom 2"),
+        new(0xA, "Standard"),
+    ])
+    {
+        Vendors = Lenovo,
+        AffectedCodes = [Vcp.Brightness, Vcp.ColorPreset, Vcp.Gamma, Vcp.LenovoOverdrive],
+    };
+
+    /// <summary>
+    /// Shows the current refresh rate on screen. Bit 0x0800 of the 0xFA feature manifest (off 0xF5E0, on 0xFDE0).
+    /// </summary>
+    public static readonly BitFeature RefreshRateDisplay = new("refresh-rate-display", "Refresh rate display", Vcp.LenovoFeatureToggles, bit: 11)
+    {
+        Vendors = Lenovo,
+    };
+
+    /// <summary>
+    /// How the monitor fits the picture to the panel. The MCCS 0x86 code shares the register with the standard
+    /// "image position" on other vendors; here it means aspect-ratio scaling.
+    /// </summary>
+    public static readonly EnumFeature DisplayScalingFeature = new("display-scaling", "Display scaling", Vcp.DisplayScaling,
+    [
+        new(0x01, "No scaling"),
+        new(0x02, "Full screen"),
+        new(0x05, "Original aspect"),
+        new(0x0B, "4:3"),
+        new(0x0F, "16:9"),
+        new(0x10, "16:10"),
+        new(0x0C, "5:4"),
+    ]);
+
+    /// <summary>
+    /// Locks the monitor's own front-panel buttons (bit 0 of 0xF6). Display Toolkit keeps working: it talks to the
+    /// monitor over DDC/CI, which the lock doesn't block.
+    /// </summary>
+    public static readonly FlagFeature LockMonitor = new("lock-monitor", "Lock monitor buttons", Vcp.LenovoLock, bit: 0)
+    {
+        Vendors = Lenovo,
+    };
 
     public static IReadOnlyList<Feature> All { get; } =
     [
@@ -269,6 +411,7 @@ public static class FeatureCatalog
         AuraEffect, AuraColor,
         InputSource, Volume, Mute,
         PowerIndicator, PowerKeyLock, KeyLock, InputAutoDetection,
+        Overdrive, DynamicContrastRatio, LenovoHdr, GameMode, DisplayScalingFeature, LockMonitor, RefreshRateDisplay,
     ];
 
     public static Feature? Find(string id) => All.FirstOrDefault(feature => feature.Id == id);
